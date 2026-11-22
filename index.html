@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حساب السكن - متابعة المديونيات</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Cairo for crisp, modern Arabic typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom subtle scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.22s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-200 selection:bg-indigo-500 selection:text-white">
+
+    <!-- ==================== HEADER ==================== -->
+    <header class="sticky top-0 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand & Sync Status -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
+                    <!-- Wallet SVG Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">حساب السكن</h1>
+                        <span id="sync-badge" class="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                            <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                            <span id="sync-text">جاري الاتصال...</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">تسوية تلقائية ذكية لمديونيات الشقة لحظة بلحظة</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 sm:gap-2.5">
+                <button id="btn-open-debt" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold text-xs sm:text-sm shadow-sm shadow-indigo-600/25 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span>إضافة مديونية</span>
+                </button>
+
+                <button id="btn-open-payment" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-xs sm:text-sm shadow-sm shadow-emerald-600/25 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>تسجيل سداد</span>
+                </button>
+
+                <!-- Dark Mode Toggle -->
+                <button id="btn-theme-toggle" title="تغيير المظهر" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer">
+                    <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                    </svg>
+                    <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+        <!-- Quick Hint Bar -->
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl px-4 py-3 shadow-xs">
+            <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                <span class="text-indigo-500 text-base">💡</span>
+                <span>اضغط على <strong>إجمالي المديونية</strong> لعرض السجل الكامل للشخص، أو اضغط على <strong>اسم أي شخص</strong> لعرض الحساب المشترك بينكم فقط.</span>
+            </div>
+            <div id="global-summary" class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
+                إجمالي العمليات المسجلة: 0
+            </div>
+        </div>
+
+        <!-- 5 Roommates Cards Grid (5 columns side-by-side on xl desktop) -->
+        <section id="cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5">
+            <!-- Cards are dynamically rendered here -->
+        </section>
+
+    </main>
+
+    <!-- ==================== MODAL 1: ADD DEBT ==================== -->
+    <div id="modal-debt" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-fade-in">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                    </div>
+                    <h2 class="text-base font-extrabold text-slate-900 dark:text-white">إضافة مديونية جديدة</h2>
+                </div>
+                <button type="button" class="modal-close p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="form-debt" class="p-5 space-y-4">
+                <div id="debt-error" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold"></div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="debt-debtor" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">المديون (على مين؟)</label>
+                        <select id="debt-debtor" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"></select>
+                    </div>
+                    <div>
+                        <label for="debt-creditor" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">الدائن (دفعها مين؟)</label>
+                        <select id="debt-creditor" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="debt-amount" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">المبلغ (ج.م)</label>
+                    <div class="relative">
+                        <input id="debt-amount" type="number" min="1" step="0.5" placeholder="مثال: 200" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2.5 text-base font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">ج.م</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="debt-title" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">عنوان المديونية / السبب</label>
+                    <input id="debt-title" type="text" maxlength="80" placeholder="مثال: حساب الكافيه، قهوة، أوردر أكل..." required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+                    <!-- Quick Title Chips -->
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <button type="button" class="quick-chip text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-slate-600 dark:text-slate-300 transition cursor-pointer" data-val="حساب القهوة ☕">حساب القهوة ☕</button>
+                        <button type="button" class="quick-chip text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-slate-600 dark:text-slate-300 transition cursor-pointer" data-val="حساب الكافيه 🥤">حساب الكافيه 🥤</button>
+                        <button type="button" class="quick-chip text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-slate-600 dark:text-slate-300 transition cursor-pointer" data-val="أوردر أكل 🍔">أوردر أكل 🍔</button>
+                        <button type="button" class="quick-chip text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-slate-600 dark:text-slate-300 transition cursor-pointer" data-val="سوبر ماركت 🛒">سوبر ماركت 🛒</button>
+                        <button type="button" class="quick-chip text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-slate-600 dark:text-slate-300 transition cursor-pointer" data-val="فواتير الشقة 💡">فواتير الشقة 💡</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="debt-added-by" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">متضافة من مين؟</label>
+                    <select id="debt-added-by" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"></select>
+                </div>
+
+                <div class="pt-2 flex items-center gap-2.5">
+                    <button type="submit" id="btn-submit-debt" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm transition cursor-pointer">
+                        حفظ المديونية
+                    </button>
+                    <button type="button" class="modal-close py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm transition cursor-pointer">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 2: RECORD PAYMENT ==================== -->
+    <div id="modal-payment" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-fade-in">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-50/60 dark:bg-emerald-950/30">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                    </div>
+                    <h2 class="text-base font-extrabold text-slate-900 dark:text-white">دفع / سداد مديونية</h2>
+                </div>
+                <button type="button" class="modal-close p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="form-payment" class="p-5 space-y-4">
+                <div id="payment-error" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold"></div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="pay-payer" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">اللي بيدفع</label>
+                        <select id="pay-payer" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"></select>
+                    </div>
+                    <div>
+                        <label for="pay-receiver" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">اللي بيستلم</label>
+                        <select id="pay-receiver" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"></select>
+                    </div>
+                </div>
+
+                <!-- Live Current Balance Hint -->
+                <div id="pay-balance-hint" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2 text-xs">
+                    <span id="pay-balance-text" class="text-slate-600 dark:text-slate-300 font-semibold"></span>
+                    <button type="button" id="btn-pay-full" class="hidden shrink-0 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition cursor-pointer">
+                        دفع الكل
+                    </button>
+                </div>
+
+                <div>
+                    <label for="pay-amount" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">المبلغ المدفوع (ج.م)</label>
+                    <div class="relative">
+                        <input id="pay-amount" type="number" min="1" step="0.5" placeholder="اكتب المبلغ اللي دفعته..." required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2.5 text-base font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">ج.م</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">يمكنك دفع جزء من المديونية أو المبلغ بالكامل وسيتم خصمه فوراً.</p>
+                </div>
+
+                <div>
+                    <label for="pay-note" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">ملاحظة (اختياري)</label>
+                    <input id="pay-note" type="text" maxlength="80" placeholder="سداد مديونية (كاش / إنستاباي / فودافون كاش)" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+                </div>
+
+                <div>
+                    <label for="pay-added-by" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">متسجلة من مين؟</label>
+                    <select id="pay-added-by" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"></select>
+                </div>
+
+                <div class="pt-2 flex items-center gap-2.5">
+                    <button type="submit" id="btn-submit-payment" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition cursor-pointer">
+                        تأكيد السداد
+                    </button>
+                    <button type="button" class="modal-close py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm transition cursor-pointer">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 3: HISTORY ==================== -->
+    <div id="modal-history" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-xl max-h-[85vh] flex flex-col rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-fade-in">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40 shrink-0">
+                <div>
+                    <h2 id="history-title" class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">سجل المديونيات</h2>
+                    <p id="history-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
+                </div>
+                <button type="button" class="modal-close p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Pairwise / Person Summary Banner -->
+            <div id="history-summary-bar" class="px-5 py-3 bg-indigo-50/70 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900/40 flex items-center justify-between gap-2 text-xs sm:text-sm shrink-0">
+                <!-- Filled dynamically -->
+            </div>
+
+            <!-- History List Container -->
+            <div id="history-list" class="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1">
+                <!-- Items rendered dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 4: DELETE CONFIRMATION ==================== -->
+    <div id="modal-confirm-delete" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 text-center animate-fade-in">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+            </div>
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">حذف العملية؟</h3>
+            <p id="confirm-delete-desc" class="text-xs text-slate-500 dark:text-slate-400 mb-5">هل أنت متأكد من حذف هذه العملية؟ سيتم إعادة حساب المديونيات تلقائياً.</p>
+            <div class="flex items-center gap-2.5">
+                <button id="btn-confirm-delete-yes" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition cursor-pointer">
+                    نعم، احذف
+                </button>
+                <button id="btn-confirm-delete-no" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm transition cursor-pointer">
+                    تراجع
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TOAST NOTIFICATION ==================== -->
+    <div id="toast-container" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] pointer-events-none flex flex-col gap-2 w-[90%] max-w-sm"></div>
+
+    <!-- ==================== APPLICATION SCRIPT ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // ==========================================
+        // 1. CONSTANTS & ROOMMATES CONFIG
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCS3AkALixBDxpndX6RetV2MgU6srcSLeE",
+            authDomain: "sakan-app-ef817.firebaseapp.com",
+            projectId: "sakan-app-ef817",
+            storageBucket: "sakan-app-ef817.firebasestorage.app",
+            messagingSenderId: "337059323450",
+            appId: "1:337059323450:web:ce54ceff049cf777555f03"
+        };
+
+        const STORAGE_ADDED_BY_KEY = 'sakan_last_added_by';
+        const STORAGE_THEME_KEY = 'sakan_theme';
+
+        const ROOMMATES = [
+            { name: "Lord Anton", short: "LA", color: "from-indigo-500 to-blue-600", badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300" },
+            { name: "Samara",     short: "SM", color: "from-violet-500 to-purple-600", badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/60 dark:text-violet-300" },
+            { name: "Kero",       short: "KR", color: "from-cyan-500 to-teal-600", badge: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/60 dark:text-cyan-300" },
+            { name: "Andrew",     short: "AN", color: "from-amber-500 to-orange-600", badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300" },
+            { name: "Edward",     short: "ED", color: "from-rose-500 to-pink-600", badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300" }
+        ];
+
+        const ROOMMATE_NAMES = ROOMMATES.map(r => r.name);
+
+        // ==========================================
+        // 2. APPLICATION STATE
+        // ==========================================
+        let db = null;
+        let isConnected = false;
+
+        // All transactions synced in real-time from Firestore
+        let transactions = [];
+
+        // Active history modal context (so it refreshes live if a tx is deleted)
+        let activeHistoryContext = null; // { person: string, peer: string | null }
+        let pendingDeleteId = null;
+
+        // ==========================================
+        // 3. DOM REFERENCES
+        // ==========================================
+        const cardsGrid = document.getElementById('cards-grid');
+        const globalSummary = document.getElementById('global-summary');
+        const syncDot = document.getElementById('sync-dot');
+        const syncText = document.getElementById('sync-text');
+
+        // Modals
+        const modalDebt = document.getElementById('modal-debt');
+        const modalPayment = document.getElementById('modal-payment');
+        const modalHistory = document.getElementById('modal-history');
+        const modalConfirmDelete = document.getElementById('modal-confirm-delete');
+
+        // Add Debt Form Elements
+        const formDebt = document.getElementById('form-debt');
+        const debtDebtor = document.getElementById('debt-debtor');
+        const debtCreditor = document.getElementById('debt-creditor');
+        const debtAmount = document.getElementById('debt-amount');
+        const debtTitle = document.getElementById('debt-title');
+        const debtAddedBy = document.getElementById('debt-added-by');
+        const debtError = document.getElementById('debt-error');
+
+        // Payment Form Elements
+        const formPayment = document.getElementById('form-payment');
+        const payPayer = document.getElementById('pay-payer');
+        const payReceiver = document.getElementById('pay-receiver');
+        const payAmount = document.getElementById('pay-amount');
+        const payNote = document.getElementById('pay-note');
+        const payAddedBy = document.getElementById('pay-added-by');
+        const payError = document.getElementById('payment-error');
+        const payBalanceText = document.getElementById('pay-balance-text');
+        const btnPayFull = document.getElementById('btn-pay-full');
+
+        // History Modal Elements
+        const historyTitle = document.getElementById('history-title');
+        const historySubtitle = document.getElementById('history-subtitle');
+        const historySummaryBar = document.getElementById('history-summary-bar');
+        const historyList = document.getElementById('history-list');
+
+        // Toast Container
+        const toastContainer = document.getElementById('toast-container');
+
+        // ==========================================
+        // 4. UTILITY HELPERS
+        // ==========================================
+        function roundMoney(num) {
+            return Math.round((Number(num) + Number.EPSILON) * 100) / 100;
+        }
+
+        function formatMoney(num) {
+            const val = roundMoney(num);
+            return Number.isInteger(val)
+                ? val.toLocaleString('en-US')
+                : val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'تاريخ غير معروف';
+            try {
+                const date = new Date(timestamp);
+                return new Intl.DateTimeFormat('ar-EG', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                }).format(date);
+            } catch {
+                return new Date(timestamp).toLocaleString();
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bg = type === 'error'
+                ? 'bg-rose-600 text-white'
+                : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900';
+
+            toast.className = `${bg} pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs sm:text-sm font-bold text-center animate-fade-in`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.25s ease';
+                setTimeout(() => toast.remove(), 260);
+            }, 3200);
+        }
+
+        // ==========================================
+        // 5. SMART NETTING ENGINE
+        // ==========================================
+        /**
+         * Computes pairwise net balances between every pair of roommates.
+         * net[A][B] > 0 means A owes B that exact net amount.
+         * Automatically offsets mutual debts (e.g., A owes B 200, then B owes A 400 => B owes A 200, A owes B 0).
+         */
+        function calculateBalances() {
+            const net = {};
+            for (const a of ROOMMATE_NAMES) {
+                net[a] = {};
+                for (const b of ROOMMATE_NAMES) {
+                    net[a][b] = 0;
+                }
+            }
+
+            for (const tx of transactions) {
+                const { type, debtor, creditor } = tx;
+                const amount = Number(tx.amount) || 0;
+                if (!net[debtor] || !net[creditor] || debtor === creditor || amount <= 0) continue;
+
+                if (type === 'payment') {
+                    // debtor paid creditor => reduces what debtor owes creditor
+                    net[debtor][creditor] = roundMoney(net[debtor][creditor] - amount);
+                    net[creditor][debtor] = roundMoney(net[creditor][debtor] + amount);
+                } else {
+                    // debt: debtor owes creditor => increases what debtor owes creditor
+                    net[debtor][creditor] = roundMoney(net[debtor][creditor] + amount);
+                    net[creditor][debtor] = roundMoney(net[creditor][debtor] - amount);
+                }
+            }
+
+            return net;
+        }
+
+        // ==========================================
+        // 6. UI RENDERING (DASHBOARD & HISTORY)
+        // ==========================================
+        function renderDashboard() {
+            const net = calculateBalances();
+            globalSummary.textContent = `إجمالي العمليات المسجلة: ${transactions.length}`;
+
+            const cardsHtml = ROOMMATES.map((person) => {
+                // Collect everyone this person currently owes (net > 0)
+                const owesList = [];
+                let totalOwed = 0;
+                let totalReceivable = 0;
+
+                for (const other of ROOMMATE_NAMES) {
+                    if (other === person.name) continue;
+                    const balance = roundMoney(net[person.name][other]);
+                    if (balance > 0) {
+                        owesList.push({ to: other, amount: balance });
+                        totalOwed = roundMoney(totalOwed + balance);
+                    } else if (balance < 0) {
+                        totalReceivable = roundMoney(totalReceivable + Math.abs(balance));
+                    }
+                }
+
+                // Sort largest debt first
+                owesList.sort((a, b) => b.amount - a.amount);
+
+                const hasDebt = totalOwed > 0;
+
+                const owesRowsHtml = owesList.length > 0
+                    ? owesList.map(item => `
+                        <div class="group flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/40 border border-slate-100 dark:border-slate-800 transition">
+                            <button
+                                type="button"
+                                class="btn-peer-history flex-1 flex items-center justify-between gap-2 text-right cursor-pointer min-w-0"
+                                data-person="${escapeHtml(person.name)}"
+                                data-peer="${escapeHtml(item.to)}"
+                                title="اضغط لعرض سجل الحساب مع ${escapeHtml(item.to)}"
+                            >
+                                <span class="font-bold text-sm text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate transition">
+                                    ${escapeHtml(item.to)}
+                                </span>
+                                <span class="font-extrabold text-sm text-rose-600 dark:text-rose-400 shrink-0">
+                                    ${formatMoney(item.amount)} <span class="text-[10px] font-semibold">ج.م</span>
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                class="btn-quick-pay shrink-0 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white font-bold text-[11px] transition cursor-pointer"
+                                data-payer="${escapeHtml(person.name)}"
+                                data-receiver="${escapeHtml(item.to)}"
+                                data-amount="${item.amount}"
+                                title="دفع جزء أو كل المديونية"
+                            >
+                                سداد
+                            </button>
+                        </div>
+                    `).join('')
+                    : `
+                        <div class="flex flex-col items-center justify-center py-6 px-3 text-center rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-dashed border-emerald-200 dark:border-emerald-900/50">
+                            <span class="text-2xl mb-1">✅</span>
+                            <p class="text-xs font-bold text-emerald-700 dark:text-emerald-400">معليهوش أي مديونيات</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">الحساب متصفر تماماً</p>
+                        </div>
+                    `;
+
+                const receivableFooter = totalReceivable > 0
+                    ? `<div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                           <span>ليه فلوس عند الشباب:</span>
+                           <span>+${formatMoney(totalReceivable)} ج.م</span>
+                       </div>`
+                    : `<div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-semibold text-slate-400">
+                           <span>ليه فلوس عند الشباب:</span>
+                           <span>0 ج.م</span>
+                       </div>`;
+
+                return `
+                    <article class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden">
+                        <!-- Card Top Accent & Name -->
+                        <div class="p-4 pb-3 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${person.color} text-white font-extrabold text-sm flex items-center justify-center shadow-xs shrink-0">
+                                    ${person.short}
+                                </div>
+                                <div class="min-w-0">
+                                    <h2 class="font-extrabold text-base text-slate-900 dark:text-white truncate">${escapeHtml(person.name)}</h2>
+                                    <span class="text-[11px] font-semibold text-slate-400">عضو في السكن</span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                class="btn-card-add-debt w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 text-slate-600 dark:text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0"
+                                data-debtor="${escapeHtml(person.name)}"
+                                title="إضافة مديونية على ${escapeHtml(person.name)}"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Total Debt Box (Clickable for Full Person History) -->
+                        <div class="px-4">
+                            <button
+                                type="button"
+                                class="btn-person-history w-full text-right p-3.5 rounded-xl transition cursor-pointer border ${
+                                    hasDebt
+                                        ? 'bg-rose-50/70 hover:bg-rose-100/70 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 border-rose-200/80 dark:border-rose-900/50'
+                                        : 'bg-emerald-50/70 hover:bg-emerald-100/70 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-900/50'
+                                }"
+                                data-person="${escapeHtml(person.name)}"
+                                title="اضغط لعرض سجل المديونيات الكامل لـ ${escapeHtml(person.name)}"
+                            >
+                                <div class="flex items-center justify-between text-[11px] font-bold ${hasDebt ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'} mb-1">
+                                    <span>إجمالي المديونية</span>
+                                    <span class="inline-flex items-center gap-1 opacity-80">
+                                        <span>السجل</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="text-2xl font-extrabold tracking-tight ${hasDebt ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}">
+                                    ${formatMoney(totalOwed)} <span class="text-xs font-bold">ج.م</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Breakdown List: Who They Owe -->
+                        <div class="p-4 pt-3 flex-1 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[11px] font-bold text-slate-400">مديون لمين؟</span>
+                                    ${owesList.length > 0 ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">${owesList.length} ${owesList.length === 1 ? 'شخص' : 'أشخاص'}</span>` : ''}
+                                </div>
+                                <div class="space-y-2">
+                                    ${owesRowsHtml}
+                                </div>
+                            </div>
+                            ${receivableFooter}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            cardsGrid.innerHTML = cardsHtml;
+
+            // Keep History Modal refreshed if currently open
+            if (activeHistoryContext && !modalHistory.classList.contains('hidden')) {
+                renderHistoryModal(activeHistoryContext.person, activeHistoryContext.peer);
+            }
+        }
+
+        function openHistoryModal(person, peer = null) {
+            activeHistoryContext = { person, peer };
+            renderHistoryModal(person, peer);
+            openModal(modalHistory);
+        }
+
+        function renderHistoryModal(person, peer = null) {
+            const net = calculateBalances();
+
+            // Filter relevant transactions
+            let filtered = transactions.filter(tx => {
+                if (peer) {
+                    return (
+                        (tx.debtor === person && tx.creditor === peer) ||
+                        (tx.debtor === peer && tx.creditor === person)
+                    );
+                }
+                return tx.debtor === person || tx.creditor === person;
+            });
+
+            // Sort newest first
+            filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            if (peer) {
+                historyTitle.textContent = `سجل الحساب: ${person} ↔ ${peer}`;
+                historySubtitle.textContent = `كل المديونيات وعمليات السداد المشتركة بين ${person} و ${peer} فقط`;
+
+                const balance = roundMoney(net[person][peer]);
+                if (balance > 0) {
+                    historySummaryBar.innerHTML = `
+                        <span class="font-bold text-slate-700 dark:text-slate-200">الصافي الحالي: <strong class="text-rose-600 dark:text-rose-400">${escapeHtml(person)} مديون لـ ${escapeHtml(peer)} بـ ${formatMoney(balance)} ج.م</strong></span>
+                        <button type="button" id="btn-history-quick-pay" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shrink-0">سداد الآن</button>
+                    `;
+                    const payBtn = document.getElementById('btn-history-quick-pay');
+                    if (payBtn) {
+                        payBtn.addEventListener('click', () => {
+                            closeAllModals();
+                            openPaymentModal(person, peer, balance);
+                        });
+                    }
+                } else if (balance < 0) {
+                    historySummaryBar.innerHTML = `
+                        <span class="font-bold text-slate-700 dark:text-slate-200">الصافي الحالي: <strong class="text-emerald-600 dark:text-emerald-400">${escapeHtml(peer)} مديون لـ ${escapeHtml(person)} بـ ${formatMoney(Math.abs(balance))} ج.م</strong></span>
+                    `;
+                } else {
+                    historySummaryBar.innerHTML = `
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400">الصافي الحالي: الحساب بينكم متصفر تماماً (0 ج.م) ✅</span>
+                    `;
+                }
+            } else {
+                historyTitle.textContent = `السجل الكامل لـ ${person}`;
+                historySubtitle.textContent = `جميع المديونيات والمدفوعات التي يكون ${person} طرفاً فيها`;
+
+                let totalOwed = 0;
+                let totalReceivable = 0;
+                for (const other of ROOMMATE_NAMES) {
+                    if (other === person) continue;
+                    const bal = roundMoney(net[person][other]);
+                    if (bal > 0) totalOwed = roundMoney(totalOwed + bal);
+                    else if (bal < 0) totalReceivable = roundMoney(totalReceivable + Math.abs(bal));
+                }
+
+                historySummaryBar.innerHTML = `
+                    <span class="font-bold text-rose-600 dark:text-rose-400">عليه توتال: ${formatMoney(totalOwed)} ج.م</span>
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400">ليه بره: ${formatMoney(totalReceivable)} ج.م</span>
+                `;
+            }
+
+            if (filtered.length === 0) {
+                historyList.innerHTML = `
+                    <div class="py-12 text-center">
+                        <div class="text-4xl mb-2">📭</div>
+                        <p class="text-sm font-bold text-slate-600 dark:text-slate-300">لا توجد عمليات مسجلة حتى الآن</p>
+                        <p class="text-xs text-slate-400 mt-1">أي مديونية أو عملية سداد جديدة ستظهر هنا بالتاريخ والتفاصيل.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            historyList.innerHTML = filtered.map(tx => {
+                const isPayment = tx.type === 'payment';
+                const badgeClass = isPayment
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+                    : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300';
+                const badgeText = isPayment ? 'سداد' : 'مديونية';
+
+                const flowText = isPayment
+                    ? `<strong>${escapeHtml(tx.debtor)}</strong> دفع لـ <strong>${escapeHtml(tx.creditor)}</strong>`
+                    : `على <strong>${escapeHtml(tx.debtor)}</strong> لصالح <strong>${escapeHtml(tx.creditor)}</strong>`;
+
+                const amountClass = isPayment
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-600 dark:text-rose-400';
+
+                return `
+                    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md ${badgeClass}">${badgeText}</span>
+                                <h4 class="font-extrabold text-sm text-slate-900 dark:text-white truncate">${escapeHtml(tx.title || (isPayment ? 'سداد مديونية' : 'مديونية'))}</h4>
+                            </div>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 mb-2">${flowText}</p>
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                                <span class="inline-flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                    </svg>
+                                    ${formatDate(tx.createdAt)}
+                                </span>
+                                <span class="inline-flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                    </svg>
+                                    متضافة من: <strong class="text-slate-600 dark:text-slate-300">${escapeHtml(tx.addedBy || 'غير محدد')}</strong>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-end gap-2 shrink-0">
+                            <span class="font-extrabold text-base ${amountClass}">
+                                ${formatMoney(tx.amount)} <span class="text-[10px]">ج.م</span>
+                            </span>
+                            <button
+                                type="button"
+                                class="btn-delete-tx p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition cursor-pointer"
+                                data-id="${escapeHtml(tx.id)}"
+                                data-title="${escapeHtml(tx.title || '')}"
+                                title="حذف هذه العملية"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // 7. MODAL HELPERS
+        // ==========================================
+        function openModal(el) {
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+
+        function closeAllModals() {
+            [modalDebt, modalPayment, modalHistory, modalConfirmDelete].forEach(m => {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            });
+            activeHistoryContext = null;
+            pendingDeleteId = null;
+        }
+
+        function populateSelects() {
+            const optionsHtml = ROOMMATE_NAMES
+                .map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+                .join('');
+
+            [debtDebtor, debtCreditor, debtAddedBy, payPayer, payReceiver, payAddedBy].forEach(sel => {
+                sel.innerHTML = optionsHtml;
+            });
+        }
+
+        function openAddDebtModal(preselectedDebtor = null) {
+            debtError.classList.add('hidden');
+            formDebt.reset();
+            const savedAddedBy = localStorage.getItem(STORAGE_ADDED_BY_KEY);
+
+            if (preselectedDebtor && ROOMMATE_NAMES.includes(preselectedDebtor)) {
+                debtDebtor.value = preselectedDebtor;
+                const other = ROOMMATE_NAMES.find(n => n !== preselectedDebtor);
+                debtCreditor.value = other;
+                debtAddedBy.value = (savedAddedBy && ROOMMATE_NAMES.includes(savedAddedBy)) ? savedAddedBy : other;
+            } else {
+                debtDebtor.value = ROOMMATE_NAMES[0];
+                debtCreditor.value = ROOMMATE_NAMES[1];
+                debtAddedBy.value = (savedAddedBy && ROOMMATE_NAMES.includes(savedAddedBy)) ? savedAddedBy : ROOMMATE_NAMES[1];
+            }
+            openModal(modalDebt);
+            setTimeout(() => debtAmount.focus(), 60);
+        }
+
+        function updatePaymentBalanceHint() {
+            const payer = payPayer.value;
+            const receiver = payReceiver.value;
+
+            if (payer === receiver) {
+                payBalanceText.textContent = 'اختر شخصين مختلفين لتسجيل السداد.';
+                btnPayFull.classList.add('hidden');
+                return;
+            }
+
+            const net = calculateBalances();
+            const owed = roundMoney(net[payer]?.[receiver] || 0);
+
+            if (owed > 0) {
+                payBalanceText.innerHTML = `المستحق حالياً على <strong>${escapeHtml(payer)}</strong> لـ <strong>${escapeHtml(receiver)}</strong>: <span class="text-rose-600 dark:text-rose-400 font-extrabold">${formatMoney(owed)} ج.م</span>`;
+                btnPayFull.dataset.amount = owed;
+                btnPayFull.classList.remove('hidden');
+            } else if (owed < 0) {
+                payBalanceText.innerHTML = `<strong>${escapeHtml(payer)}</strong> مش مديون لـ <strong>${escapeHtml(receiver)}</strong> (بالعكس ليه عنده ${formatMoney(Math.abs(owed))} ج.م).`;
+                btnPayFull.classList.add('hidden');
+            } else {
+                payBalanceText.innerHTML = `الحساب بين <strong>${escapeHtml(payer)}</strong> و <strong>${escapeHtml(receiver)}</strong> متصفر حالياً (0 ج.م).`;
+                btnPayFull.classList.add('hidden');
+            }
+        }
+
+        function openPaymentModal(payer = null, receiver = null, amount = null) {
+            payError.classList.add('hidden');
+            formPayment.reset();
+            const savedAddedBy = localStorage.getItem(STORAGE_ADDED_BY_KEY);
+
+            if (payer && ROOMMATE_NAMES.includes(payer)) {
+                payPayer.value = payer;
+                payAddedBy.value = (savedAddedBy && ROOMMATE_NAMES.includes(savedAddedBy)) ? savedAddedBy : payer;
+            } else {
+                payPayer.value = ROOMMATE_NAMES[0];
+                payAddedBy.value = (savedAddedBy && ROOMMATE_NAMES.includes(savedAddedBy)) ? savedAddedBy : ROOMMATE_NAMES[0];
+            }
+            if (receiver && ROOMMATE_NAMES.includes(receiver) && receiver !== payPayer.value) {
+                payReceiver.value = receiver;
+            } else {
+                payReceiver.value = ROOMMATE_NAMES.find(n => n !== payPayer.value);
+            }
+            if (amount && Number(amount) > 0) {
+                payAmount.value = amount;
+            }
+            updatePaymentBalanceHint();
+            openModal(modalPayment);
+            setTimeout(() => payAmount.focus(), 60);
+        }
+
+        // ==========================================
+        // 8. DATA LAYER (DIRECT FIRESTORE)
+        // ==========================================
+        function getTransactionsCollectionRef() {
+            return collection(db, 'transactions');
+        }
+
+        async function saveTransaction(txData) {
+            if (!db) {
+                showToast('جاري الاتصال بقاعدة البيانات، حاول مرة أخرى بعد لحظة.', 'error');
+                return false;
+            }
+            try {
+                await addDoc(getTransactionsCollectionRef(), txData);
+                return true;
+            } catch (err) {
+                console.error('Firestore add error:', err);
+                showToast('حدث خطأ أثناء الحفظ، تأكد من اتصال الإنترنت وإعدادات Firebase.', 'error');
+                return false;
+            }
+        }
+
+        async function removeTransaction(txId) {
+            if (!db) return false;
+            try {
+                const docRef = doc(db, 'transactions', txId);
+                await deleteDoc(docRef);
+                return true;
+            } catch (err) {
+                console.error('Firestore delete error:', err);
+                showToast('تعذر حذف العملية، حاول مرة أخرى.', 'error');
+                return false;
+            }
+        }
+
+        function setSyncStatus(connected, label) {
+            isConnected = connected;
+            syncDot.className = `w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-500' : 'bg-amber-400 animate-pulse'}`;
+            syncText.textContent = label;
+        }
+
+        function initFirebase() {
+            try {
+                setSyncStatus(false, 'جاري الاتصال...');
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+
+                const colRef = getTransactionsCollectionRef();
+                onSnapshot(
+                    colRef,
+                    (snapshot) => {
+                        setSyncStatus(true, 'متصل سحابياً');
+                        transactions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                        renderDashboard();
+                    },
+                    (error) => {
+                        console.error('Firestore listener error:', error);
+                        setSyncStatus(false, 'خطأ في الاتصال');
+                        showToast('تعذر المزامنة مع السحابة، تأكد من إعدادات Rules في Firebase.', 'error');
+                    }
+                );
+            } catch (err) {
+                console.error('Firebase init failed:', err);
+                setSyncStatus(false, 'تعذر الاتصال');
+                renderDashboard();
+            }
+        }
+
+        // ==========================================
+        // 9. THEME & EVENT LISTENERS
+        // ==========================================
+        function initTheme() {
+            const btnToggle = document.getElementById('btn-theme-toggle');
+            const iconSun = document.getElementById('icon-sun');
+            const iconMoon = document.getElementById('icon-moon');
+
+            const applyTheme = (isDark) => {
+                document.documentElement.classList.toggle('dark', isDark);
+                iconSun.classList.toggle('hidden', !isDark);
+                iconMoon.classList.toggle('hidden', isDark);
+            };
+
+            const saved = localStorage.getItem(STORAGE_THEME_KEY);
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(saved ? saved === 'dark' : prefersDark);
+
+            btnToggle.addEventListener('click', () => {
+                const nowDark = !document.documentElement.classList.contains('dark');
+                localStorage.setItem(STORAGE_THEME_KEY, nowDark ? 'dark' : 'light');
+                applyTheme(nowDark);
+            });
+        }
+
+        // Header Buttons
+        document.getElementById('btn-open-debt').addEventListener('click', () => openAddDebtModal());
+        document.getElementById('btn-open-payment').addEventListener('click', () => openPaymentModal());
+
+        // Close buttons & backdrop click
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', closeAllModals);
+        });
+
+        [modalDebt, modalPayment, modalHistory].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeAllModals();
+            });
+        });
+
+        // Quick Title Chips
+        document.querySelectorAll('.quick-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                debtTitle.value = chip.dataset.val;
+                debtTitle.focus();
+            });
+        });
+
+        // Pay Full Button
+        btnPayFull.addEventListener('click', () => {
+            if (btnPayFull.dataset.amount) {
+                payAmount.value = btnPayFull.dataset.amount;
+            }
+        });
+
+        payPayer.addEventListener('change', updatePaymentBalanceHint);
+        payReceiver.addEventListener('change', updatePaymentBalanceHint);
+
+        // Delegated Click Events on Cards Grid
+        cardsGrid.addEventListener('click', (e) => {
+            const personHistoryBtn = e.target.closest('.btn-person-history');
+            if (personHistoryBtn) {
+                openHistoryModal(personHistoryBtn.dataset.person, null);
+                return;
+            }
+
+            const peerHistoryBtn = e.target.closest('.btn-peer-history');
+            if (peerHistoryBtn) {
+                openHistoryModal(peerHistoryBtn.dataset.person, peerHistoryBtn.dataset.peer);
+                return;
+            }
+
+            const quickPayBtn = e.target.closest('.btn-quick-pay');
+            if (quickPayBtn) {
+                openPaymentModal(
+                    quickPayBtn.dataset.payer,
+                    quickPayBtn.dataset.receiver,
+                    quickPayBtn.dataset.amount
+                );
+                return;
+            }
+
+            const addDebtCardBtn = e.target.closest('.btn-card-add-debt');
+            if (addDebtCardBtn) {
+                openAddDebtModal(addDebtCardBtn.dataset.debtor);
+            }
+        });
+
+        // Submit Add Debt Form
+        formDebt.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            debtError.classList.add('hidden');
+
+            const debtor = debtDebtor.value;
+            const creditor = debtCreditor.value;
+            const amount = roundMoney(debtAmount.value);
+            const title = debtTitle.value.trim();
+            const addedBy = debtAddedBy.value;
+
+            if (debtor === creditor) {
+                debtError.textContent = 'لا يمكن تسجيل مديونية من الشخص لنفسه! اختر شخصين مختلفين.';
+                debtError.classList.remove('hidden');
+                return;
+            }
+            if (!amount || amount <= 0) {
+                debtError.textContent = 'يرجى إدخال مبلغ صحيح أكبر من الصفر.';
+                debtError.classList.remove('hidden');
+                return;
+            }
+            if (!title) {
+                debtError.textContent = 'يرجى كتابة عنوان أو سبب المديونية.';
+                debtError.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-debt');
+            btn.disabled = true;
+            btn.textContent = 'جاري الحفظ...';
+
+            const ok = await saveTransaction({
+                type: 'debt',
+                debtor,
+                creditor,
+                amount,
+                title,
+                addedBy,
+                createdAt: Date.now()
+            });
+
+            btn.disabled = false;
+            btn.textContent = 'حفظ المديونية';
+
+            if (ok) {
+                localStorage.setItem(STORAGE_ADDED_BY_KEY, addedBy);
+                closeAllModals();
+                showToast(`تمت إضافة ${formatMoney(amount)} ج.م على ${debtor} لصالح ${creditor}`);
+            }
+        });
+
+        // Submit Payment Form
+        formPayment.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            payError.classList.add('hidden');
+
+            const payer = payPayer.value;
+            const receiver = payReceiver.value;
+            const amount = roundMoney(payAmount.value);
+            const note = payNote.value.trim() || 'سداد مديونية';
+            const addedBy = payAddedBy.value;
+
+            if (payer === receiver) {
+                payError.textContent = 'لا يمكن تسجيل سداد من الشخص لنفسه! اختر شخصين مختلفين.';
+                payError.classList.remove('hidden');
+                return;
+            }
+            if (!amount || amount <= 0) {
+                payError.textContent = 'يرجى إدخال مبلغ سداد صحيح أكبر من الصفر.';
+                payError.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-payment');
+            btn.disabled = true;
+            btn.textContent = 'جاري التسجيل...';
+
+            const ok = await saveTransaction({
+                type: 'payment',
+                debtor: payer,
+                creditor: receiver,
+                amount,
+                title: note,
+                addedBy,
+                createdAt: Date.now()
+            });
+
+            btn.disabled = false;
+            btn.textContent = 'تأكيد السداد';
+
+            if (ok) {
+                localStorage.setItem(STORAGE_ADDED_BY_KEY, addedBy);
+                closeAllModals();
+                showToast(`تم خصم ${formatMoney(amount)} ج.م سداد من ${payer} لـ ${receiver}`);
+            }
+        });
+
+        // Delete Transaction from History Modal
+        historyList.addEventListener('click', (e) => {
+            const delBtn = e.target.closest('.btn-delete-tx');
+            if (!delBtn) return;
+            pendingDeleteId = delBtn.dataset.id;
+            const txTitle = delBtn.dataset.title;
+            document.getElementById('confirm-delete-desc').textContent = txTitle
+                ? `هل أنت متأكد من حذف عملية "${txTitle}"؟ سيتم إعادة حساب المديونيات تلقائياً.`
+                : 'هل أنت متأكد من حذف هذه العملية؟ سيتم إعادة حساب المديونيات تلقائياً.';
+            openModal(modalConfirmDelete);
+        });
+
+        document.getElementById('btn-confirm-delete-no').addEventListener('click', () => {
+            pendingDeleteId = null;
+            modalConfirmDelete.classList.add('hidden');
+            modalConfirmDelete.classList.remove('flex');
+        });
+
+        document.getElementById('btn-confirm-delete-yes').addEventListener('click', async () => {
+            if (!pendingDeleteId) return;
+            const idToDelete = pendingDeleteId;
+            pendingDeleteId = null;
+            modalConfirmDelete.classList.add('hidden');
+            modalConfirmDelete.classList.remove('flex');
+
+            const ok = await removeTransaction(idToDelete);
+            if (ok) {
+                showToast('تم حذف العملية وإعادة حساب المديونيات');
+            }
+        });
+
+        // Keyboard Escape closes modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!modalConfirmDelete.classList.contains('hidden')) {
+                    modalConfirmDelete.classList.add('hidden');
+                    modalConfirmDelete.classList.remove('flex');
+                    pendingDeleteId = null;
+                } else {
+                    closeAllModals();
+                }
+            }
+        });
+
+        // ==========================================
+        // 10. INITIALIZE APP
+        // ==========================================
+        initTheme();
+        populateSelects();
+        renderDashboard();
+        initFirebase();
+    </script>
+</body>
+</html>
